@@ -8,6 +8,8 @@ namespace Server.Items
 {
     public class StatBall : Item
     {
+        public int MaxUses = 1; //Maximum uses before being deleted
+
         [Constructable]
         public StatBall() : base(0x186E) //Setting the Ball
         {
@@ -47,14 +49,14 @@ namespace Server.Items
         private int Dexterity;
         private int Intelligence;
 
-        private int StatLimit = 225;
+        private readonly int StatLimit = 225;
 
         public StatBallGump(PlayerMobile from, StatBall ball) : base(150, 250)
         {
             FormMobile = from; //Player Mobile
             Ball = ball; //The Stat Ball
             var LimitPerStat = StatLimit / 3; //Limit placeholder per stat
-
+            
             //General Gump Settings
             Closable = true;
             Disposable = true;
@@ -121,9 +123,9 @@ namespace Server.Items
             FormMobile.RawStr = Strenght;
             FormMobile.RawDex = Dexterity;
             FormMobile.RawInt = Intelligence;
-
-            Ball.Delete();
-            }     
+            Ball.MaxUses--;
+            if (Ball.MaxUses == 0) Ball.Delete();
+            }
         }
 
         private bool IsValuesValid(RelayInfo info)
