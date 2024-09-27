@@ -1,7 +1,7 @@
-using System;
+using Server.Gumps;
 using Server.Mobiles;
 using Server.Network;
-using Server.Gumps;
+using System;
 
 //Statball system by CantFind
 namespace Server.Items
@@ -20,21 +20,27 @@ namespace Server.Items
             Hue = 0;
         }
 
-        public override void OnDoubleClick(Mobile from){
-            if (!IsChildOf(from.Backpack)) { from.SendLocalizedMessage(1042001);}// That must be in your pack for you to use it.
-            else if (from is PlayerMobile){from.SendGump(new StatBallGump((PlayerMobile)from, this));}}
+        public override void OnDoubleClick(Mobile from)
+        {
+            if (!IsChildOf(from.Backpack)) { from.SendLocalizedMessage(1042001); }// That must be in your pack for you to use it.
+            else if (from is PlayerMobile) { _ = from.SendGump(new StatBallGump((PlayerMobile)from, this)); }
+        }
 
-        public override bool DisplayLootType { get { return false; } }
+        public override bool DisplayLootType => false;
 
-        public StatBall(Serial serial) : base(serial){}
+        public StatBall(Serial serial) : base(serial) { }
 
-        public override void Serialize(GenericWriter writer){
+        public override void Serialize(GenericWriter writer)
+        {
             base.Serialize(writer);
-            writer.Write(0);}// version
+            writer.Write(0);// version
+        }
 
-        public override void Deserialize(GenericReader reader){
+        public override void Deserialize(GenericReader reader)
+        {
             base.Deserialize(reader);
-            int version = reader.ReadInt();}
+            _ = reader.ReadInt();
+        }
     }
 }
 
@@ -42,8 +48,8 @@ namespace Server.Items
 {
     public class StatBallGump : Gump
     {
-        private PlayerMobile FormMobile;
-        private StatBall Ball;
+        private readonly PlayerMobile PlayerFormMobile;
+        private readonly StatBall Ball;
 
         private int Strenght;
         private int Dexterity;
@@ -51,12 +57,12 @@ namespace Server.Items
 
         private readonly int StatLimit = 225;
 
-        public StatBallGump(PlayerMobile from, StatBall ball) : base(150, 250)
+        public StatBallGump(PlayerMobile player, StatBall ball) : base(150, 250)
         {
-            FormMobile = from; //Player Mobile
+            PlayerFormMobile = player; //Player Mobile
             Ball = ball; //The Stat Ball
-            var LimitPerStat = StatLimit / 3; //Limit placeholder per stat
-            
+            int LimitPerStat = StatLimit / 3; //Limit placeholder per stat
+
             //General Gump Settings
             Closable = true;
             Disposable = true;
@@ -65,8 +71,8 @@ namespace Server.Items
             AddPage(0);
 
             //Background
-            AddBackground(50, 50, 450, 230, 9250); //Stone Wallpaper
-            AddBackground(57, 59, 437, 215, 9300); //Yellow Paper Wallpaper
+            AddBackground(50, 50, 450, 230, 9250); //Stone Background
+            AddBackground(57, 59, 437, 215, 9300); //Yellow Paper Background
 
             //Exit Button
             AddButton(60, 61, 1227, 1227, 0, GumpButtonType.Reply, 0);
@@ -96,35 +102,44 @@ namespace Server.Items
             AddLabel(67, 248, 0, "Stat totals should equal " + StatLimit);
 
             //Accept Gump
-            AddBackground(322, 284, 179, 88, 9250); //Stone Wallpaper
-            AddBackground(329, 292, 167, 75, 9300); //Yellow Paper Wallpaper
+            AddBackground(322, 284, 179, 88, 9250); //Stone Background
+            AddBackground(329, 292, 167, 75, 9300); //Yellow Paper Background
             AddLabel(345, 319, 0, "Do you accept?");
             AddButton(429, 306, 92, 92, 1, GumpButtonType.Reply, 0); //Accept button
         }
 
         public override void OnResponse(NetState sender, RelayInfo info)
         {
-            if (Ball.Deleted || !IsValuesValid(info)) return;
-
-            var TotalStat = Strenght + Dexterity + Intelligence;
-            if (TotalStat < StatLimit){
-            FormMobile.SendMessage($"The total of Strenght: {Strenght}, Dexterity: {Dexterity}, Intelligence: {Intelligence} makes {TotalStat} you need to add {StatLimit - TotalStat} more to reach {StatLimit} ");
-            FormMobile.SendGump(new StatBallGump(FormMobile, Ball));
-            return;
+            if (Ball.Deleted || !IsValuesValid(info))
+            {
+                return;
             }
 
-            if (TotalStat > StatLimit){
-            FormMobile.SendMessage($"The total of Strenght: {Strenght}, Dexterity: {Dexterity}, Intelligence: {Intelligence} makes {TotalStat} you need to subtract {TotalStat - StatLimit} from the total to be {StatLimit} ");
-            FormMobile.SendGump(new StatBallGump(FormMobile, Ball));
-            return;
+            int TotalStat = Strenght + Dexterity + Intelligence;
+            if (TotalStat < StatLimit)
+            {
+                PlayerFormMobile.SendMessage($"The total of Strenght: {Strenght}, Dexterity: {Dexterity}, Intelligence: {Intelligence} makes {TotalStat} you need to add {StatLimit - TotalStat} more to reach {StatLimit} ");
+                _ = PlayerFormMobile.SendGump(new StatBallGump(PlayerFormMobile, Ball));
+                return;
             }
 
-            if (info.ButtonID == 1){ //If accepted set values
-            FormMobile.RawStr = Strenght;
-            FormMobile.RawDex = Dexterity;
-            FormMobile.RawInt = Intelligence;
-            Ball.MaxUses--;
-            if (Ball.MaxUses == 0) Ball.Delete();
+            if (TotalStat > StatLimit)
+            {
+                PlayerFormMobile.SendMessage($"The total of Strenght: {Strenght}, Dexterity: {Dexterity}, Intelligence: {Intelligence} makes {TotalStat} you need to subtract {TotalStat - StatLimit} from the total to be {StatLimit} ");
+                _ = PlayerFormMobile.SendGump(new StatBallGump(PlayerFormMobile, Ball));
+                return;
+            }
+
+            if (info.ButtonID == 1)
+            { //If accepted set values
+                PlayerFormMobile.RawStr = Strenght;
+                PlayerFormMobile.RawDex = Dexterity;
+                PlayerFormMobile.RawInt = Intelligence;
+                Ball.MaxUses--;
+                if (Ball.MaxUses == 0)
+                {
+                    Ball.Delete();
+                }
             }
         }
 
@@ -132,19 +147,17 @@ namespace Server.Items
         {
             TextRelay strenght = info.GetTextEntry(0);
             try { Strenght = Convert.ToInt32(strenght.Text); }
-            catch { FormMobile.SendMessage("You were too strong on the keyboard that you pressed invalid keys. Try again"); return false; }
+            catch { PlayerFormMobile.SendMessage("You were too strong on the keyboard that you pressed invalid keys. Try again"); return false; }
 
             TextRelay dexterity = info.GetTextEntry(1);
             try { Dexterity = Convert.ToInt32(dexterity.Text); }
-            catch { FormMobile.SendMessage("Does that value at dexterity does not really look like a number. Try again"); return false; }
+            catch { PlayerFormMobile.SendMessage("Does that value at dexterity does not really look like a number. Try again"); return false; }
 
             TextRelay intelligence = info.GetTextEntry(2);
             try { Intelligence = Convert.ToInt32(intelligence.Text); }
-            catch { FormMobile.SendMessage("Intelligence? uhh... That does not look like a valid number. Try again"); return false; }
+            catch { PlayerFormMobile.SendMessage("Intelligence? uhh... That does not look like a valid number. Try again"); return false; }
 
-            if (Strenght < 10 || Dexterity < 10 || Intelligence < 10) return false;
-
-            return true;
+            return Strenght >= 10 && Dexterity >= 10 && Intelligence >= 10;
         }
     }
 }
