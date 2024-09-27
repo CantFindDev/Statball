@@ -55,13 +55,13 @@ namespace Server.Items
         private int Dexterity;
         private int Intelligence;
 
-        private readonly int StatLimit = 225;
+        private readonly int StatLimit = 225; //Maximum total limit
 
         public StatBallGump(PlayerMobile player, StatBall ball) : base(150, 250)
         {
             PlayerFormMobile = player; //Player Mobile
             Ball = ball; //The Stat Ball
-            int LimitPerStat = StatLimit / 3; //Limit placeholder per stat
+            int LimitPerStat = StatLimit / 3; //Limit per stat
 
             //General Gump Settings
             Closable = true;
@@ -151,7 +151,7 @@ namespace Server.Items
 
             TextRelay dexterity = info.GetTextEntry(1);
             try { Dexterity = Convert.ToInt32(dexterity.Text); }
-            catch { PlayerFormMobile.SendMessage("Does that value at dexterity does not really look like a number. Try again"); return false; }
+            catch { PlayerFormMobile.SendMessage("That value of dexterity does not really look like a number. Try again"); return false; }
 
             TextRelay intelligence = info.GetTextEntry(2);
             try { Intelligence = Convert.ToInt32(intelligence.Text); }
